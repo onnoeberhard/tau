@@ -1,5 +1,5 @@
 # tau
-This used to be two repository- now it's one, that's why there's no history :)
+This used to be two repositories- now it's one, that's why there's no history :)
 
 If you don't know what this is, look [here](https://onno-eberhard.appspot.com/tau)
 
