@@ -1,10 +1,12 @@
 # tau
-This used to be two repositories- now it's one, that's why there's no history :)
+This is my open source, Raspberry Pi - controlled chain of lights hanging in my room.
+If you want to control the lights, click [here](https://onno-eberhard.appspot.com/tau)
 
-If you don't know what this is, look [here](https://onno-eberhard.appspot.com/tau)
+## /api
+This is the API, accessible via http://tau.spdns.org/
 
-## api
-Here is the API (as I bet you've guessed), written in php.
+## /cli
+This is the command line interface running on the Raspberry Pi. Whenever someone changes the lights, the cli prints it to the screen.
 
-## cli
-This is the command line interface running on the Raspberry Pi, written in Python.
+## Other Stuff
+Here is @MrBesen's binary clock for tau: https://github.com/mrbesen/onnos-uhr
