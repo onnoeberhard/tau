@@ -142,7 +142,7 @@ while True:
     cmd = input()
     if cmd == "m":
         monitor = not monitor
-        print("Turning monitor " + ("on." if monitor else "off."))
+        print(colored("Turning monitor " + ("on." if monitor else "off."), "cyan"))
         GPIO.output(2, monitor)
     elif cmd == "w":
         web = not web
@@ -157,7 +157,7 @@ while True:
             t_web = threading.Thread(target=p_web)
             t_web.setDaemon(True)
             t_web.start()
-        print(("Start" if web else "Stopp") + "ing server control.")
+        print(colored(("Start" if web else "Stopp") + "ing server control.", "cyan"))
     elif cmd == "l":
         web = False
         half = False
@@ -165,7 +165,7 @@ while True:
         clock = False
         stopwatch = False
         lights = not lights
-        print("Turning lights " + ("on." if lights else "off."))
+        print(colored("Turning lights " + ("on." if lights else "off."), "cyan"))
         for i in range(10):
             GPIO.output(i + 3, lights)
     elif cmd == "h":
@@ -175,7 +175,7 @@ while True:
         clock = False
         stopwatch = False
         half = not half
-        print("Turning half the lights " + ("on." if half else "off."))
+        print(colored("Turning half the lights " + ("on." if half else "off."), "cyan"))
         sequence = "1010101010"
         for i in range(10):
             GPIO.output(i + 3, int(sequence[i]) if half else 0)
@@ -190,7 +190,7 @@ while True:
             t_zigzag = threading.Thread(target=p_zigzag)
             t_zigzag.setDaemon(True)
             t_zigzag.start()
-        print("Running!" if zigzag == 1 else "Zig-Zagging!" if zigzag == 2 else "Stopping Zig-Zag.")
+        print(colored("Running!" if zigzag == 1 else "Zig-Zagging!" if zigzag == 2 else "Stopping Zig-Zag.", "cyan"))
     elif cmd == "c":
         web = False
         lights = False
@@ -202,7 +202,7 @@ while True:
             t_clock = threading.Thread(target=p_clock)
             t_clock.setDaemon(True)
             t_clock.start()
-        print(("A" if clock else "Dea") + "ctivating clock.")
+        print(colored(("A" if clock else "Dea") + "ctivating clock.", "cyan"))
     elif cmd == "s":
         web = False
         lights = False
@@ -223,8 +223,8 @@ while True:
             for i in range(10):
                 GPIO.output(i + 3, 0)
         if _sw != stopwatch:
-            print(("Activating and star" if stopwatch else "Deactiva") + "ting stopwatch.")
+            print(colored(("Activating and star" if stopwatch else "Deactiva") + "ting stopwatch.", "cyan"))
         elif _st != stopped:
-            print("Stopping stopwatch.")
+            print(colored("Stopping stopwatch.", "cyan"))
     elif cmd == "exit":
         sys.exit(0)
