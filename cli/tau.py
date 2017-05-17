@@ -38,12 +38,9 @@ def p_web():
             GPIO.output(i + 3, int(value[i]))
         cursor.execute("SELECT * FROM `lightlog` WHERE `id` >= '" + str(lastlog) + "'")
         rows = cursor.fetchall()
-        offset = 1
-        # while offset < len(rows) and rows[offset][1] == rows[0][1]:
-        #     offset += 1
-        for i in range(len(rows) - offset):
-            row = rows[i + offset]
-            first = rows[i + offset - 1]
+        for i in range(len(rows) - 1):
+            row = rows[i + 1]
+            first = rows[i]
             print(row[1] + "> " + colored(row[2], "magenta" if
                   "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "1000000000" or
                   "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0000010000" else "red" if

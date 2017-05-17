@@ -9,15 +9,21 @@ if ($_GET['a'] == "push_lights" && preg_match("/^[0,1]{10}$/", $_GET['l']) == 1)
     $sql = "UPDATE `stuff` SET `value` = '" . $lights . "' WHERE `key` = 'lights'";
     $db->query($sql);
     $city = "";
+    $state = "";
+    $country = "";
     if (array_key_exists('p', $_GET)) {
         $json = curlJson("https://maps.googleapis.com/maps/api/geocode/json?latlng=" . $_GET['p'] . "&key=" . $google_api_key)['results'];
-        $city = "";
         foreach ($json as $try)
-            foreach ($try['address_components'] as $part)
-                if (in_array("locality", $part['types'])) {
+            foreach ($try['address_components'] as $part) {
+                if (in_array("locality", $part['types']) && $city == "")
                     $city = $part['long_name'];
-                    break 2;
-                }
+                elseif (in_array("administrative_area_level_1", $part['types']) && $state == "")
+                    $state = $part['long_name'];
+                elseif (in_array("country", $part['types']) && $country == "")
+                    $country = $part['long_name'];
+                if ($country != "" && $state != "" && $city != "") break 2;
+            }
+        $city .= ($state != "" ? ", " . $state : "") . ($country != "" ? ", " . $country : "");
     }
     $sql = "INSERT INTO `lightlog` (`timestamp`, `value`, `city`) VALUES ('" . date("Y-m-d H:i:s") . "', '" . $lights . "', '" . $city . "')";
     $db->query($sql);
@@ -31,7 +37,8 @@ if ($_GET['a'] == "push_lights" && preg_match("/^[0,1]{10}$/", $_GET['l']) == 1)
         ) . ");";
 }
 
-function curlJson($url) {
+function curlJson($url)
+{
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $url);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
