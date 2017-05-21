@@ -36,30 +36,21 @@ def p_web():
         value = cursor.fetchall()[0][2]
         for i in range(10):
             GPIO.output(i + 3, int(value[i]))
-        cursor.execute("SELECT * FROM `lightlog` WHERE `id` >= '" + str(lastlog) + "'")
+        cursor.execute("SELECT * FROM `lightlog` WHERE `id` > '" + str(lastlog) + "'")
         rows = cursor.fetchall()
-        for i in range(len(rows) - 1):
-            row = rows[i + 1]
-            first = rows[i]
-            print(row[1] + "> " + colored(row[2], "magenta" if
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "1000000000" or
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0000010000" else "red" if
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0100000000" or
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0000001000" else "yellow" if
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0010000000" or
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0000000100" else "green" if
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0001000000" or
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0000000010" else "blue" if
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0000100000" or
-                  "{0:010b}".format(abs(int(first[2], 2) - int(row[2], 2))) == "0000000001" else "white")
-                  + ((" from " + row[3]) if row[3] != "" else ""))
-        if len(rows) > 1:
+        for i in range(len(rows)):
+            row = rows[i]
+            print(row[1] + "> " +
+                  colored(row[2], "magenta" if row[3] == "red" else "red" if row[3] == "orange" else "yellow" if
+                  row[3] == "yellow" else "green" if row[3] == "green" else "blue" if row[3] == "blue" else "white") +
+                  ((" from " + row[5]) if row[5] != "" else ""))
+        if len(rows) > 0:
             cursor.execute("UPDATE `stuff` SET `value` = '" + str(rows[len(rows) - 1][0]) + "' WHERE `key` = 'lastlog'")
             db.commit()
         for i in range(10):
             GPIO.output(i + 3, int(value[i]))
         db.close()
-        time.sleep(.1)
+        time.sleep(1)
 
 
 t_web = threading.Thread(target=p_web)
