@@ -6,14 +6,14 @@ include './credentials.php';
 $db = new PDO("mysql:dbname=db;host=localhost", $mysql_user, $mysql_password);
 if ($_GET['a'] == "push_lights" && preg_match("/^[0,1]{10}$/", $_GET['l']) == 1) {
     $lights = $_GET['l'];
-    $sql = "UPDATE `stuff` SET `value` = '" . $lights . "' WHERE `key` = 'lights'";
-    $db->query($sql);
+    $db->query("UPDATE `stuff` SET `value` = '" . $lights . "' WHERE `key` = 'lights'");
     $city = "";
     $state = "";
     $country = "";
+    $p = "";
     if (array_key_exists('p', $_GET)) {
-        $json = curlJson("https://maps.googleapis.com/maps/api/geocode/json?latlng=" . $_GET['p'] . "&key=" . $google_api_key)['results'];
-        foreach ($json as $try)
+        $p = $_GET['p'];
+        foreach (curlJson("https://maps.googleapis.com/maps/api/geocode/json?latlng=" . $_GET['p'] . "&key=" . $google_api_key . "&language=en")['results'] as $try)
             foreach ($try['address_components'] as $part) {
                 if (in_array("locality", $part['types']) && $city == "")
                     $city = $part['long_name'];
@@ -25,30 +25,32 @@ if ($_GET['a'] == "push_lights" && preg_match("/^[0,1]{10}$/", $_GET['l']) == 1)
             }
         $city .= ($state != "" ? ", " . $state : "") . ($country != "" ? ", " . $country : "");
     }
-    $sql = "SELECT `value` FROM `lightlog` ORDER BY `id` DESC LIMIT 1";
-    $val = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC)[0]['value'];
-    $d = sprintf("%010d", decbin(abs(bindec($val) - bindec($lights))));
+    $d = sprintf("%010d", decbin(abs(bindec($db->query("SELECT `value` FROM `lightlog` ORDER BY `id` DESC LIMIT 1")->fetchAll(PDO::FETCH_ASSOC)[0]['value']) - bindec($lights))));
     $color = (($d == "1000000000" || $d == "0000010000") ? "red" : (($d == "0100000000" || $d == "0000001000") ? "orange" :
             (($d == "0010000000" || $d == "0000000100") ? "yellow" : (($d == "0001000000" || $d == "0000000010") ? "green" :
             (($d == "0000100000" || $d == "0000000001") ? "blue" : "")))));
-    $sql = "INSERT INTO `lightlog` (`timestamp`, `value`, `color`, `latlng`, `city`) VALUES ('" . date("Y-m-d H:i:s") . "', '" . $lights . "', '" . $color . "', '" . $_GET['p'] . "', '" . $city . "')";
-    $db->query($sql);
+    $db->query("INSERT INTO `lightlog` (`timestamp`, `value`, `color`, `latlng`, `city`) VALUES ('" . date("Y-m-d H:i:s") . "', '" . $lights . "', '" . $color . "', '" . $p . "', '" . $city . "')");
+    $ip = array_key_exists('ip', $_GET) ? $_GET['ip'] : "";
+    $db->query("
+            INSERT INTO `stats` (`type`, `name`, `value`) VALUES ('color', '" . $color . "', 1) ON DUPLICATE KEY UPDATE `value` = `value` + 1;
+            INSERT INTO `stats` (`type`, `name`, `value`) VALUES ('city', '" . $city . "', 1) ON DUPLICATE KEY UPDATE `value` = `value` + 1;
+            INSERT INTO `stats` (`type`, `name`, `value`, `data`) VALUES ('ip', '" . $ip . "', 1, '" . $city . "') ON DUPLICATE KEY UPDATE `value` = `value` + 1
+    ");
     backcall(null);
 } elseif ($_GET['a'] == "get_lights") {
-    $sql = "SELECT `value` FROM `stuff` WHERE `key` = 'lights'";
-    $result = $db->query($sql);
-    $rows = $result->fetchAll(PDO::FETCH_ASSOC);
-    backcall(array("result" => $rows[0]["value"]));
+    backcall(array("result" => $db->query("SELECT `value` FROM `stuff` WHERE `key` = 'lights'")->fetchAll(PDO::FETCH_ASSOC)[0]["value"]));
 } elseif ($_GET['a'] == "get_map") {
-    $sql = "SELECT `latlng`, `color` FROM `lightlog` WHERE `latlng`<>''";
-    $result = $db->query($sql);
-    $rows = $result->fetchAll(PDO::FETCH_ASSOC);
-    backcall($rows);
-} elseif ($_GET['a'] == "get_last_log") {
-    $sql = "SELECT * FROM `lightlog` ORDER BY `id` DESC LIMIT 20";
-    $result = $db->query($sql);
-    $rows = $result->fetchAll(PDO::FETCH_ASSOC);
-    backcall($rows);
+    backcall($db->query("SELECT `latlng`, `color` FROM `lightlog` WHERE `latlng`<>''")->fetchAll(PDO::FETCH_ASSOC));
+} elseif ($_GET['a'] == "get_log_stats") {
+    $logs = $db->query("SELECT * FROM `lightlog` ORDER BY `id` DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
+    $stats = $db->query("
+            SELECT * FROM `stats` WHERE `type` = 'color' AND `name`<>''
+            UNION
+            SELECT * FROM (SELECT * FROM `stats` WHERE `type` = 'city' AND `name`<>'' ORDER BY `value` DESC LIMIT 3) AS `cities`
+            UNION
+            SELECT * FROM (SELECT * FROM `stats` WHERE `type` = 'ip' AND `name`<>'' AND `data`<>'' ORDER BY `value` DESC LIMIT 3) AS `people`
+    ")->fetchAll(PDO::FETCH_ASSOC);
+    backcall(array("logs" => $logs, "stats" => $stats));
 }
 
 function backcall($array) {

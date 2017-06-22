@@ -54,7 +54,7 @@ def p_web():
 
 
 t_web = threading.Thread(target=p_web)
-t_web.setDaemon(True)
+t_web.daemon = True
 t_web.start()
 
 
@@ -143,7 +143,7 @@ while True:
             GPIO.output(i + 3, 0)
         if web:
             t_web = threading.Thread(target=p_web)
-            t_web.setDaemon(True)
+            t_web.daemon = True
             t_web.start()
         print(colored(("Start" if web else "Stopp") + "ing server control.", "cyan"))
     elif cmd == "l":
@@ -176,7 +176,7 @@ while True:
         zigzag = 1 if zigzag == 0 else 2 if zigzag == 1 else 0
         if zigzag == 1:
             t_zigzag = threading.Thread(target=p_zigzag)
-            t_zigzag.setDaemon(True)
+            t_zigzag.daemon = True
             t_zigzag.start()
         print(colored("Running!" if zigzag == 1 else "Zig-Zagging!" if zigzag == 2 else "Stopping Zig-Zag.", "cyan"))
     elif cmd == "c":
@@ -188,7 +188,7 @@ while True:
         clock = not clock
         if clock:
             t_clock = threading.Thread(target=p_clock)
-            t_clock.setDaemon(True)
+            t_clock.daemon = True
             t_clock.start()
         print(colored(("A" if clock else "Dea") + "ctivating clock.", "cyan"))
     elif cmd == "s":
@@ -205,7 +205,7 @@ while True:
         stopped = stopwatch and not stopped and _sw == stopwatch
         if stopwatch and not stopped:
             t_stopwatch = threading.Thread(target=p_stopwatch)
-            t_stopwatch.setDaemon(True)
+            t_stopwatch.daemon = True
             t_stopwatch.start()
         elif not stopwatch:
             for i in range(10):
