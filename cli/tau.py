@@ -2,12 +2,14 @@ import datetime
 import sys
 import threading
 import time
+import re
 
 import RPi.GPIO as GPIO
 import pymysql
 from termcolor import colored
 
 import credentials
+from tau_num import tau
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -18,6 +20,7 @@ GPIO.output(2, 1)
 
 monitor = True
 lights = False
+tauing = False
 half = False
 zigzag = 0
 clock = False
@@ -51,11 +54,26 @@ def p_web():
             GPIO.output(i + 3, int(value[i]))
         db.close()
         time.sleep(1)
+    for o in range(10):
+        GPIO.output(o + 3, 0)
 
 
 t_web = threading.Thread(target=p_web)
 t_web.daemon = True
 t_web.start()
+
+
+def p_tauing():
+    i = 0
+    while tauing:
+        if re.match("[0-9]", tau[i]):
+            number = format(int(tau[i]), '010b')
+            for o in range(10):
+                GPIO.output(o + 3, int(number[o]))
+            time.sleep(0.1)
+        i += 1
+    for o in range(10):
+        GPIO.output(o + 3, 0)
 
 
 def p_zigzag():
@@ -133,12 +151,13 @@ while True:
         print(colored("Turning monitor " + ("on." if monitor else "off."), "cyan"))
         GPIO.output(2, monitor)
     elif cmd == "w":
-        web = not web
+        lights = False
+        tauing = False
         half = False
         zigzag = 0
         clock = False
         stopwatch = False
-        lights = False
+        web = not web
         for i in range(10):
             GPIO.output(i + 3, 0)
         if web:
@@ -148,6 +167,7 @@ while True:
         print(colored(("Start" if web else "Stopp") + "ing server control.", "cyan"))
     elif cmd == "l":
         web = False
+        tauing = False
         half = False
         zigzag = 0
         clock = False
@@ -156,9 +176,22 @@ while True:
         print(colored("Turning lights " + ("on." if lights else "off."), "cyan"))
         for i in range(10):
             GPIO.output(i + 3, lights)
+    elif cmd == "t":
+        web = False
+        lights = False
+        half = False
+        zigzag = 0
+        stopwatch = False
+        tauing = not tauing
+        if tauing:
+            t_tauing = threading.Thread(target=p_tauing)
+            t_tauing.daemon = True
+            t_tauing.start()
+        print(colored(("A" if tauing else "Dea") + "ctivating tauing.", "cyan"))
     elif cmd == "h":
         web = False
         lights = False
+        tauing = False
         zigzag = 0
         clock = False
         stopwatch = False
@@ -170,6 +203,7 @@ while True:
     elif cmd == "z":
         web = False
         lights = False
+        tauing = False
         half = False
         clock = False
         stopwatch = False
@@ -182,6 +216,7 @@ while True:
     elif cmd == "c":
         web = False
         lights = False
+        tauing = False
         half = False
         zigzag = 0
         stopwatch = False
@@ -194,6 +229,7 @@ while True:
     elif cmd == "s":
         web = False
         lights = False
+        tauing = False
         half = False
         zigzag = 0
         clock = False
