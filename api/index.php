@@ -40,16 +40,19 @@ if ($_GET['a'] == "push_lights" && preg_match("/^[0,1]{10}$/", $_GET['l']) == 1)
 } elseif ($_GET['a'] == "get_lights") {
     backcall(array("result" => $db->query("SELECT `value` FROM `stuff` WHERE `key` = 'lights'")->fetchAll(PDO::FETCH_ASSOC)[0]["value"]));
 } elseif ($_GET['a'] == "get_map") {
-    backcall($db->query("SELECT `latlng`, `color` FROM `lightlog` WHERE `latlng`<>''")->fetchAll(PDO::FETCH_ASSOC));
+    backcall($db->query("SELECT `latlng`, `color` FROM `lightlog` WHERE `latlng`<>'' GROUP BY `latlng`")->fetchAll(PDO::FETCH_ASSOC));
 } elseif ($_GET['a'] == "get_log_stats") {
     $logs = $db->query("SELECT * FROM `lightlog` ORDER BY `id` DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
     $stats = $db->query("
             SELECT * FROM `stats` WHERE `type` = 'color' AND `name`<>''
             UNION
-            SELECT * FROM (SELECT * FROM `stats` WHERE `type` = 'city' AND `name`<>'' ORDER BY `value` DESC LIMIT 3) AS `cities`
-            UNION
-            SELECT * FROM (SELECT * FROM `stats` WHERE `type` = 'ip' AND `name`<>'' AND `data`<>'' ORDER BY `value` DESC LIMIT 3) AS `people`
+            SELECT * FROM (SELECT * FROM `stats` WHERE `type` = 'city' AND `name`<>'' ORDER BY `value` DESC LIMIT 10) AS `cities`
     ")->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($stats as &$stat)
+        if ($stat['type'] == "city") {
+            $x = $db->query("SELECT COUNT(*) AS x FROM `stats` WHERE `type` = 'ip' AND `name`<>'' AND `data` = '" . $stat['name'] . "' ORDER BY `value` ")->fetchAll()[0]['x'];
+            $stat['count'] = $x == 0 ? 1 : $x;
+        }
     backcall(array("logs" => $logs, "stats" => $stats));
 }
 
