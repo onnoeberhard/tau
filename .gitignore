@@ -1,0 +1,27 @@
+*.xml
+
+api/credentials.php
+
+api/test.php
+
+Board.png
+
+*.iml
+
+cli/credentials.py
+
+cli/test.py
+
+eplan.png
+
+*.png
+
+ssh_key.ppk
+
+Tau.epdz
+
+tauday 2017.mov
+
+tau1.jpg
+
+tau2.jpg
